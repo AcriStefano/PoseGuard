@@ -7,14 +7,16 @@ struct TrackingView: View {
 
     @StateObject private var postureMonitor = PostureMonitorModel()
     @State private var motionManager = CMHeadphoneMotionManager()
-    @State private var trackingStart: Date?
+    /// Non-nil while tracking; also measures the session's time in a correct posture.
+    @State private var postureTimer: CorrectPostureTimer?
     @State private var showTips = false
     @State private var showReport = false
     @State private var showAirPodsAlert = false
 
+    @Environment(SessionStore.self) private var sessionStore
     @Environment(\.accessibilityReduceMotion) private var reduceMotion
 
-    private var isTracking: Bool { trackingStart != nil }
+    private var isTracking: Bool { postureTimer != nil }
 
     /// Gray while idle, green or red while tracking, as in the original design.
     private var stateColor: Color {
@@ -59,14 +61,18 @@ struct TrackingView: View {
                 .ignoresSafeArea()
             }
             .overlay(alignment: .bottom) {
-                if let trackingStart {
-                    LiveStatsCard(startDate: trackingStart, pitch: postureMonitor.pitch, roll: postureMonitor.roll)
+                if let postureTimer {
+                    LiveStatsCard(startDate: postureTimer.start, pitch: postureMonitor.pitch, roll: postureMonitor.roll)
                         .padding()
-                        .transition(.move(edge: .bottom).combined(with: .opacity))
+                        .transition(reduceMotion ? .opacity : .move(edge: .bottom).combined(with: .opacity))
                 }
             }
             .animation(Theme.spring, value: isTracking)
             .animation(.smooth, value: postureMonitor.isPostureCorrect)
+            // Named for VoiceOver and the app switcher, but not drawn in the bar.
+            .navigationTitle("PoseGuard")
+            .navigationBarTitleDisplayMode(.inline)
+            .toolbar(removing: .title)
             .toolbar {
                 ToolbarItem(placement: .topBarLeading) {
                     Button("How it works", systemImage: "info.circle", action: showOnboarding)
@@ -91,6 +97,12 @@ struct TrackingView: View {
             .sensoryFeedback(trigger: postureMonitor.isPostureCorrect) { _, isCorrect in
                 isTracking && !isCorrect ? .warning : nil
             }
+            .onChange(of: postureMonitor.isPostureCorrect) { _, isCorrect in
+                guard isTracking else { return }
+                postureTimer?.update(isCorrect: isCorrect, at: .now)
+                // VoiceOver users can't see the color change, so speak it.
+                AccessibilityNotification.Announcement(postureMonitor.postureMessage).post()
+            }
         }
     }
 
@@ -109,7 +121,7 @@ struct TrackingView: View {
     private func startTracking() {
         areAirPodsConnected { isAirPods in
             if isAirPods && motionManager.isDeviceMotionAvailable {
-                trackingStart = .now
+                postureTimer = CorrectPostureTimer(start: .now, isCorrect: postureMonitor.isPostureCorrect)
                 postureMonitor.startMonitoring()
             } else {
                 showAirPodsAlert = true
@@ -118,7 +130,10 @@ struct TrackingView: View {
     }
 
     private func stopTracking() {
-        trackingStart = nil
+        if let session = postureTimer?.session(endingAt: .now) {
+            sessionStore.add(session)
+        }
+        postureTimer = nil
         postureMonitor.stopMonitoring()
     }
 
@@ -187,4 +202,5 @@ struct TrackingView: View {
 
 #Preview {
     TrackingView(hasCompletedOnboarding: .constant(true))
+        .environment(SessionStore())
 }

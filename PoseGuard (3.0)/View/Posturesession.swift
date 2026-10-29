@@ -7,16 +7,21 @@
 
 import Foundation
 
-struct PostureSession: Identifiable, Equatable {
-    let id = UUID()
-    let startTime: String
-    let endTime: String
-    let duration: Double
+/// One recorded tracking session.
+struct PostureSession: Identifiable, Equatable, Codable {
+    var id = UUID()
+    let start: Date
+    let end: Date
+    /// Percentage (0–100) of the session spent in a correct posture.
     let avgQuality: Int
-    let category: PostureCategory
 
-    // Implementazione di Equatable
-    static func == (lhs: PostureSession, rhs: PostureSession) -> Bool {
-        lhs.id == rhs.id
+    var seconds: TimeInterval { end.timeIntervalSince(start) }
+    var category: PostureCategory { PostureCategory(quality: Double(avgQuality)) }
+}
+
+extension TimeInterval {
+    /// Compact duration such as "1h 25m" or "4m 10s".
+    var durationText: String {
+        Duration.seconds(self).formatted(.units(allowed: [.hours, .minutes, .seconds], width: .narrow, maximumUnitCount: 2))
     }
 }

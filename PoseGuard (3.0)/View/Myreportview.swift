@@ -31,8 +31,8 @@ struct MyReportView: View {
             }
             .navigationTitle("My Report")
             .toolbar {
-                ToolbarItem(placement: .confirmationAction) {
-                    Button("Done") { dismiss() }
+                ToolbarItem(placement: .cancellationAction) {
+                    Button("Close", systemImage: "xmark") { dismiss() }
                 }
             }
             .sensoryFeedback(.selection, trigger: selectedReportType)
@@ -43,4 +43,5 @@ struct MyReportView: View {
 
 #Preview {
     MyReportView()
+        .environment(SessionStore())
 }

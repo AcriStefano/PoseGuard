@@ -7,28 +7,51 @@
 
 import Foundation
 
+/// The sessions recorded on one calendar day.
 struct DayData: Identifiable, Equatable {
-    let id = UUID()
-    let day: String
+    /// Start of the day.
+    let date: Date
     let sessions: [PostureSession]
 
-    // Ore raggruppate per categoria
-    func hours(for category: PostureCategory) -> Double {
-        sessions.filter { $0.category == category }.reduce(0) { $0 + $1.duration }
+    var id: Date { date }
+    var title: String { date.formatted(.dateTime.weekday(.wide)) }
+
+    func seconds(for category: PostureCategory) -> TimeInterval {
+        sessions.filter { $0.category == category }.reduce(0) { $0 + $1.seconds }
     }
 
-    // Statistiche giornaliere
-    var totalHours: Double {
-        sessions.reduce(0) { $0 + $1.duration }
+    var totalSeconds: TimeInterval {
+        sessions.reduce(0) { $0 + $1.seconds }
     }
+
+    /// Quality averaged over the day, weighted by session length.
+    var averageQuality: Double {
+        guard totalSeconds > 0 else { return 0 }
+        return sessions.reduce(0) { $0 + Double($1.avgQuality) * $1.seconds } / totalSeconds
+    }
+
+    /// Category segments in hours, stacked bottom-up (good, medium, bad), skipping empty ones.
+    var stack: [(category: PostureCategory, start: Double, end: Double)] {
+        var top = 0.0
+        return PostureCategory.allCases.compactMap { category in
+            let hours = seconds(for: category) / 3600
+            guard hours > 0 else { return nil }
+            defer { top += hours }
+            return (category, top, top + hours)
+        }
+    }
+}
+
+extension [DayData] {
+    var sessionCount: Int { reduce(0) { $0 + $1.sessions.count } }
+    var totalSeconds: TimeInterval { reduce(0) { $0 + $1.totalSeconds } }
 
     var averageQuality: Double {
-        let weightedSum = sessions.reduce(0) { $0 + (Double($1.avgQuality) * $1.duration) }
-        return sessions.isEmpty ? 0 : weightedSum / totalHours
+        guard totalSeconds > 0 else { return 0 }
+        return reduce(0) { $0 + $1.averageQuality * $1.totalSeconds } / totalSeconds
     }
 
-    // Implementazione di Equatable
-    static func == (lhs: DayData, rhs: DayData) -> Bool {
-        lhs.id == rhs.id && lhs.day == rhs.day
+    func sessionCount(for category: PostureCategory) -> Int {
+        reduce(0) { $0 + $1.sessions.filter { $0.category == category }.count }
     }
 }

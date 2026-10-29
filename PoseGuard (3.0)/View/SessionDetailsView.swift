@@ -24,10 +24,12 @@ struct SessionDetailsView: View {
                                 Text(day.averageQuality / 100, format: .percent.precision(.fractionLength(0)))
                                     .font(.footnote.bold())
                                     .monospacedDigit()
+                                    .minimumScaleFactor(0.5)
+                                    .padding(8)
                             }
 
                         VStack(alignment: .leading, spacing: 4) {
-                            Text(day.day)
+                            Text(day.title)
                                 .font(.title2.bold())
 
                             Text("Average quality: \(Int(day.averageQuality))%")
@@ -39,7 +41,7 @@ struct SessionDetailsView: View {
 
                     // One stacked bar showing how the day's time splits across categories.
                     Chart(PostureCategory.allCases) { category in
-                        BarMark(x: .value("Hours", day.hours(for: category)))
+                        BarMark(x: .value("Hours", day.seconds(for: category)))
                             .foregroundStyle(category.color.gradient)
                     }
                     .chartXAxis(.hidden)
@@ -49,7 +51,7 @@ struct SessionDetailsView: View {
 
                     ForEach(PostureCategory.allCases) { category in
                         LabeledContent {
-                            Text("\(day.hours(for: category), format: .number.precision(.fractionLength(1)))h")
+                            Text(day.seconds(for: category).durationText)
                                 .monospacedDigit()
                         } label: {
                             Label {
@@ -74,12 +76,14 @@ struct SessionDetailsView: View {
                                             Text("\(session.avgQuality)")
                                                 .font(.caption.bold())
                                                 .monospacedDigit()
+                                                .minimumScaleFactor(0.5)
+                                                .padding(4)
                                         }
                                 } label: {
-                                    Text("\(session.startTime) – \(session.endTime)")
+                                    Text("\(session.start.formatted(date: .omitted, time: .shortened)) – \(session.end.formatted(date: .omitted, time: .shortened))")
                                         .font(.headline)
                                         .monospacedDigit()
-                                    Text("Duration: \(session.duration.formatted(.number.precision(.fractionLength(1)))) hours")
+                                    Text("Duration: \(session.seconds.durationText)")
                                 }
                             }
                         } header: {
@@ -95,14 +99,14 @@ struct SessionDetailsView: View {
 
                 Section {
                     LabeledContent("Total sessions", value: day.sessions.count.formatted())
-                    LabeledContent("Total hours", value: day.totalHours.formatted(.number.precision(.fractionLength(1))))
+                    LabeledContent("Total time", value: day.totalSeconds.durationText)
                 }
             }
             .navigationTitle("Session Details")
             .navigationBarTitleDisplayMode(.inline)
             .toolbar {
-                ToolbarItem(placement: .confirmationAction) {
-                    Button("Done") { dismiss() }
+                ToolbarItem(placement: .cancellationAction) {
+                    Button("Close", systemImage: "xmark") { dismiss() }
                 }
             }
         }

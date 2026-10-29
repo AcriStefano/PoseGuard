@@ -12,16 +12,19 @@ struct TrackButton: View {
     let tint: Color
     let action: () -> Void
 
+    @Environment(\.accessibilityReduceMotion) private var reduceMotion
+
     private let size: CGFloat = 210
 
     var body: some View {
         Button(action: action) {
             Image(systemName: "airpodspro")
                 .font(.system(size: 76))
-                .foregroundStyle(.white)
-                .symbolEffect(.breathe, isActive: isTracking)
+                // Black on the bright green keeps the glyph above 3:1 contrast; white elsewhere.
+                .foregroundStyle(tint == Theme.brandGreen ? .black : .white)
+                .symbolEffect(.breathe, isActive: isTracking && !reduceMotion)
                 // A periodic bounce while idle hints that the button is tappable.
-                .symbolEffect(.bounce, options: .repeat(.periodic(delay: 2.5)), isActive: !isTracking)
+                .symbolEffect(.bounce, options: .repeat(.periodic(delay: 2.5)), isActive: !isTracking && !reduceMotion)
                 .frame(width: size, height: size)
                 .modifier(TrackButtonBackground(tint: tint))
                 .contentShape(.circle)

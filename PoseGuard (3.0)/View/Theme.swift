@@ -10,11 +10,12 @@ enum Theme {
     static let cardRadius: CGFloat = 24
     static let spring = Animation.spring(duration: 0.45, bounce: 0.25)
 
-    // Original PoseGuard palette, on a black, always-dark interface.
-    static let brandGreen = Color(red: 0x4C / 255, green: 0xEF / 255, blue: 0x7E / 255)
-    static let gold = Color(red: 1, green: 0xD7 / 255, blue: 0)
-    static let alertRed = Color(red: 1, green: 0x52 / 255, blue: 0x52 / 255)
-    static let cardBackground = Color(red: 0x12 / 255, green: 0x12 / 255, blue: 0x12 / 255)
+    // Original PoseGuard palette (#4CEF7E, #FFD700, #FF5252, #121212) on an always-dark interface.
+    // The asset catalog adds light and Increase Contrast variants.
+    static let brandGreen = Color(.accent)
+    static let gold = Color(.gold)
+    static let alertRed = Color(.alertRed)
+    static let cardBackground = Color(.cardBackground)
 }
 
 extension View {

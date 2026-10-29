@@ -13,26 +13,32 @@ struct MyTipsView: View {
 
     var body: some View {
         NavigationStack {
-            List(viewModel.tips) { tip in
-                Label {
-                    VStack(alignment: .leading, spacing: 4) {
-                        Text(tip.title)
-                            .font(.headline)
+            List {
+                Section {
+                    ForEach(viewModel.tips) { tip in
+                        Label {
+                            VStack(alignment: .leading, spacing: 4) {
+                                Text(tip.title)
+                                    .font(.headline)
 
-                        Text(tip.description)
-                            .font(.subheadline)
-                            .foregroundStyle(.secondary)
+                                Text(tip.description)
+                                    .font(.subheadline)
+                                    .foregroundStyle(.secondary)
+                            }
+                        } icon: {
+                            Image(systemName: tip.icon)
+                                .foregroundStyle(.tint)
+                        }
+                        .padding(.vertical, 6)
                     }
-                } icon: {
-                    Image(systemName: tip.icon)
-                        .foregroundStyle(.tint)
+                } footer: {
+                    Text("These tips are general guidance, not medical advice. If you have pain or a medical condition, talk to a doctor.")
                 }
-                .padding(.vertical, 6)
             }
             .navigationTitle("Tips")
             .toolbar {
-                ToolbarItem(placement: .confirmationAction) {
-                    Button("Done") { dismiss() }
+                ToolbarItem(placement: .cancellationAction) {
+                    Button("Close", systemImage: "xmark") { dismiss() }
                 }
             }
         }

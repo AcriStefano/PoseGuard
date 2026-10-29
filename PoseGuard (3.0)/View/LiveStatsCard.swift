@@ -11,8 +11,13 @@ struct LiveStatsCard: View {
     let pitch: Double
     let roll: Double
 
+    @Environment(\.dynamicTypeSize) private var dynamicTypeSize
+
     var body: some View {
-        HStack(alignment: .top) {
+        // Side by side normally, stacked at accessibility text sizes so words never break.
+        let row = dynamicTypeSize.isAccessibilitySize ? AnyLayout(VStackLayout(spacing: 12)) : AnyLayout(HStackLayout(alignment: .top))
+
+        row {
             VStack(spacing: 4) {
                 Text(startDate, style: .timer)
                     .font(.title2.bold())

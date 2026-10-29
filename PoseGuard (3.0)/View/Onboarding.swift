@@ -9,6 +9,7 @@ import SwiftUI
 
 struct OnboardingView: View {
     @Binding var hasCompletedOnboarding: Bool
+    @State private var showPrivacyPolicy = false
 
     var body: some View {
         ScrollView {
@@ -55,14 +56,22 @@ struct OnboardingView: View {
         .scrollBounceBehavior(.basedOnSize)
         .safeAreaInset(edge: .bottom) {
             VStack(spacing: 16) {
-                Label("PoseGuard works in the background. Your posture data never leaves your iPhone.", systemImage: "lock.shield")
-                    .font(.footnote)
-                    .foregroundStyle(.secondary)
+                VStack(spacing: 4) {
+                    Label("Your posture data never leaves your iPhone.", systemImage: "lock.shield")
+                        .foregroundStyle(.secondary)
+
+                    Button("Privacy Policy") { showPrivacyPolicy = true }
+                        .bold()
+                }
+                .font(.footnote)
 
                 continueButton
             }
             .padding(24)
             .background(.bar)
+        }
+        .sheet(isPresented: $showPrivacyPolicy) {
+            PrivacyPolicyView()
         }
     }
 

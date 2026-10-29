@@ -9,20 +9,25 @@ import SwiftUI
 
 // MARK: - PostureDailyChart Component
 struct PostureDailyChart: View {
-    @StateObject private var viewModel = PostureDailyViewModel()
+    @Environment(SessionStore.self) private var sessionStore
+    @Environment(\.dynamicTypeSize) private var dynamicTypeSize
 
     var body: some View {
+        // Side by side normally, stacked at accessibility text sizes so words never break.
+        let row = dynamicTypeSize.isAccessibilitySize ? AnyLayout(VStackLayout(spacing: 8)) : AnyLayout(HStackLayout(spacing: 8))
+
         VStack(alignment: .leading, spacing: 20) {
             VStack(alignment: .leading, spacing: 4) {
                 Text("Today's Posture")
                     .font(.title2.bold())
+                    .accessibilityAddTraits(.isHeader)
 
                 Text("Daily statistics")
                     .font(.subheadline)
                     .foregroundStyle(.secondary)
             }
 
-            if let today = viewModel.todayData {
+            if let today = sessionStore.today() {
                 QualityRing(value: today.averageQuality, lineWidth: 18)
                     .frame(width: 180, height: 180)
                     .overlay {
@@ -31,29 +36,31 @@ struct PostureDailyChart: View {
                                 .font(.largeTitle.bold())
                                 .fontDesign(.rounded)
                                 .monospacedDigit()
+                                .minimumScaleFactor(0.5)
 
                             Text("Quality")
                                 .font(.subheadline)
                                 .foregroundStyle(.secondary)
                         }
+                        .padding(24)
                     }
                     .frame(maxWidth: .infinity)
                     .padding(.vertical, 8)
 
-                HStack(spacing: 8) {
+                row {
                     ForEach(PostureCategory.allCases) { category in
-                        let hours = today.hours(for: category)
+                        let seconds = today.seconds(for: category)
                         CategoryTile(
                             category: category,
-                            detail: Text("\(hours, format: .number.precision(.fractionLength(1)))h · \(hours / today.totalHours, format: .percent.precision(.fractionLength(0)))")
+                            detail: Text("\(seconds.durationText) · \(seconds / today.totalSeconds, format: .percent.precision(.fractionLength(0)))")
                         )
                     }
                 }
 
                 Divider()
 
-                HStack {
-                    StatView(title: "Hours", value: today.totalHours.formatted(.number.precision(.fractionLength(1))), icon: "clock.fill")
+                row {
+                    StatView(title: "Time", value: today.totalSeconds.durationText, icon: "clock.fill")
                     StatView(title: "Quality", value: (today.averageQuality / 100).formatted(.percent.precision(.fractionLength(0))), icon: "chart.bar.fill")
                     StatView(title: "Sessions", value: today.sessions.count.formatted(), icon: "list.bullet")
                 }
@@ -74,4 +81,5 @@ struct PostureDailyChart: View {
         PostureDailyChart()
             .padding()
     }
+    .environment(SessionStore())
 }
