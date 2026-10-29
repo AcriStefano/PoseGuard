@@ -7,14 +7,11 @@
 
 import Foundation
 import SwiftUI
-import Charts
-import UIKit
 
 // MARK: - ViewModel
 class PostureViewModel: ObservableObject {
     @Published var sessionData: [DayData] = []
     @Published var selectedDay: DayData?
-    @Published var showingDetailsModal = false
     
     var totalSessions: Int {
         sessionData.flatMap { $0.sessions }.count
@@ -87,14 +84,7 @@ class PostureViewModel: ObservableObject {
                 let quality = Int.random(in: 40...95)
                 
                 // Determiniamo la categoria basata sulla qualità
-                let category: PostureCategory
-                if quality >= 80 {
-                    category = .buona
-                } else if quality >= 60 {
-                    category = .media
-                } else {
-                    category = .cattiva
-                }
+                let category = PostureCategory(quality: Double(quality))
                 
                 // Creiamo la sessione e la aggiungiamo
                 let session = PostureSession(
@@ -119,23 +109,4 @@ class PostureViewModel: ObservableObject {
         sessionData = randomData
     }
     
-    func selectDay(at point: CGPoint, proxy: ChartProxy, geometry: GeometryProxy) {
-        let xPosition = point.x - geometry.frame(in: .local).origin.x
-        
-        // Calculate the chart area width
-        let chartWidth = geometry.frame(in: .local).width
-        
-        // Get the total number of days displayed
-        let totalDays = sessionData.count
-        
-        // Calculate approximate day index based on tap position
-        let approximateIndex = Int((xPosition / chartWidth) * CGFloat(totalDays))
-        
-        // Ensure the index is within bounds
-        let safeIndex = min(max(0, approximateIndex), totalDays - 1)
-        
-        // Select the day at that index
-        self.selectedDay = sessionData[safeIndex]
-        self.showingDetailsModal = true
-    }
 }
